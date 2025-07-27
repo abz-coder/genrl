@@ -136,47 +136,13 @@ class ModalSwarmCoordinator(SwarmCoordinator):
                     "peerId": peer_id,
                 },
             )
-            logger.info(f"✅ Successfully submitted reward {reward} for round {round_num}, stage {stage_num}")
+            logger.info(f"✅ Successfully submitted reward {reward} for round {round_num}")
         except requests.exceptions.HTTPError as e:
-            if e.response is None:
-                logger.error(f"❌ Submit reward failed: No response received")
+            if e.response is None or e.response.status_code != 500:
                 raise
-            
-            status_code = e.response.status_code
-            
-            if status_code == 400:
-                # Handle 400 Bad Request errors - usually duplicate submissions or invalid data
-                try:
-                    err_data = e.response.json()
-                    err_name = err_data.get("error", "Unknown400Error")
-                    
-                    if err_name in ["RewardAlreadySubmitted", "DuplicateReward"]:
-                        logger.info(f"⚠️  Reward already submitted for round {round_num}, stage {stage_num}. Continuing.")
-                        return
-                    else:
-                        logger.warning(f"⚠️  Submit reward failed with 400 error: {err_name}")
-                        logger.info(f"📊 Request data: round={round_num}, stage={stage_num}, reward={reward}, peer={peer_id}")
-                        # Continue execution instead of crashing
-                        return
-                        
-                except json.JSONDecodeError:
-                    logger.warning(f"⚠️  Submit reward failed with 400 Bad Request (could not parse error details)")
-                    logger.info(f"📊 Request data: round={round_num}, stage={stage_num}, reward={reward}, peer={peer_id}")
-                    # Continue execution instead of crashing
-                    return
-                    
-            elif status_code == 500:
-                # Handle 500 Internal Server Error - usually temporary issues
-                logger.warning(f"⚠️  Submit reward failed with 500 Internal Server Error. Continuing.")
-                return
-            else:
-                # Handle other HTTP errors
-                logger.error(f"❌ Submit reward failed with HTTP {status_code}: {e}")
-                raise
-        except requests.exceptions.RequestException as e:
-            logger.error(f"❌ Submit reward failed with network error: {e}")
-            logger.info("🔄 Continuing execution despite network error")
-            return
+
+            logger.debug("Unknown error calling submit_reward endpoint! Continuing.")
+            # logger.info("Reward already submitted for this round/stage! Continuing.")
 
     def submit_winners(self, round_num, winners, peer_id):
         try:
@@ -188,42 +154,7 @@ class ModalSwarmCoordinator(SwarmCoordinator):
             )
             logger.info(f"✅ Successfully submitted winners {winners} for round {round_num}")
         except requests.exceptions.HTTPError as e:
-            if e.response is None:
-                logger.error(f"❌ Submit winners failed: No response received")
+            if e.response is None or e.response.status_code != 500:
                 raise
-            
-            status_code = e.response.status_code
-            
-            if status_code == 400:
-                # Handle 400 Bad Request errors - usually duplicate submissions or invalid data
-                try:
-                    err_data = e.response.json()
-                    err_name = err_data.get("error", "Unknown400Error")
-                    
-                    if err_name in ["WinnersAlreadySubmitted", "DuplicateWinners"]:
-                        logger.info(f"⚠️  Winners already submitted for round {round_num}. Continuing.")
-                        return
-                    else:
-                        logger.warning(f"⚠️  Submit winners failed with 400 error: {err_name}")
-                        logger.info(f"📊 Request data: round={round_num}, winners={winners}, peer={peer_id}")
-                        # Continue execution instead of crashing
-                        return
-                        
-                except json.JSONDecodeError:
-                    logger.warning(f"⚠️  Submit winners failed with 400 Bad Request (could not parse error details)")
-                    logger.info(f"📊 Request data: round={round_num}, winners={winners}, peer={peer_id}")
-                    # Continue execution instead of crashing
-                    return
-                    
-            elif status_code == 500:
-                # Handle 500 Internal Server Error - usually temporary issues
-                logger.warning(f"⚠️  Submit winners failed with 500 Internal Server Error. Continuing.")
-                return
-            else:
-                # Handle other HTTP errors
-                logger.error(f"❌ Submit winners failed with HTTP {status_code}: {e}")
-                raise
-        except requests.exceptions.RequestException as e:
-            logger.error(f"❌ Submit winners failed with network error: {e}")
-            logger.info("🔄 Continuing execution despite network error")
-            return
+
+            logger.debug("Unknown error calling submit-winner endpoint! Continuing.")
